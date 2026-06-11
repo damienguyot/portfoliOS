@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Damien GUYOT - portfoliOS</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
+  canvas { display: block; }
+  #scanlines {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 2px, transparent 2px, transparent 4px);
+    pointer-events: none; z-index: 11;
+  }
+  #loader {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #000; z-index: 999;
+    transition: opacity 1.6s ease;
+    pointer-events: all;
+  }
+  #loader.fade { opacity: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="loader"></div>
+<div id="scanlines"></div>
+<div id="vignette"></div>
+
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
