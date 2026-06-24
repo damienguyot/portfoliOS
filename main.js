@@ -1,5 +1,5 @@
 import * as THREE from './lib/three.module.js';
-import { webglAvailable, scene, camera, renderer, screenLight, monitor, keyboard, woodTex } from './scene.js';
+import { webglAvailable, scene, camera, renderer, screenLight, monitor, keyboard, woodTex, computeFOV, addTouchHint, touchHintScene, touchHintMat } from './scene.js';
 import { composer, useComposer, pixelFisheyePass, updateScreenBounds } from './postprocessing.js';
 import { term, drawTerminal } from './terminal/index.js';
 import { playBoot, setBootWarning } from './terminal/boot.js';
@@ -62,6 +62,61 @@ if (webglAvailable) {
 // ══════════════════════════════════
 
 setupKeyboard();
+
+// ══════════════════════════════════
+// Touch gestures (mobile)
+// ══════════════════════════════════
+
+if (navigator.maxTouchPoints > 0 && matchMedia('(pointer: coarse)').matches) {
+  let tx = 0, ty = 0, tt = 0;
+  let multi = false;
+  const SWIPE = 30;
+
+  function fire(key) {
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+  }
+
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length >= 2) {
+      multi = true;
+      e.preventDefault();
+      fire('Escape');
+      return;
+    }
+    multi = false;
+    tx = e.touches[0].clientX;
+    ty = e.touches[0].clientY;
+    tt = Date.now();
+  }, { passive: false });
+
+  document.addEventListener('touchend', (e) => {
+    if (multi || e.touches.length > 0) return;
+    e.preventDefault();
+    const c = e.changedTouches[0];
+    if (!c) return;
+    const dx = c.clientX - tx;
+    const dy = c.clientY - ty;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const dt = Date.now() - tt;
+
+    let key;
+    if (dist < SWIPE && dt < 300) {
+      key = ' ';
+    } else if (Math.abs(dx) > Math.abs(dy)) {
+      key = dx > 0 ? 'ArrowRight' : 'ArrowLeft';
+    } else {
+      key = dy > 0 ? 'ArrowDown' : 'ArrowUp';
+    }
+    fire(key);
+  }, { passive: false });
+
+  document.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+  }, { passive: false });
+
+  if (keyboard) keyboard.addEventListener('loaded', addTouchHint, { once: true });
+}
+
 drawTerminal();
 playBoot();
 
@@ -127,19 +182,33 @@ if (!webglAvailable) {
     } else {
       renderer.render(scene, camera);
     }
+
+    // Touch hint overlay — bypasses post-processing
+    if (touchHintScene && touchHintMat) {
+      renderer.autoClear = false;
+      renderer.render(touchHintScene, camera);
+      renderer.autoClear = true;
+      if (touchHintMat.opacity > 0.01) {
+        touchHintMat.opacity -= dt * 0.2;
+      } else if (touchHintMat.opacity > 0) {
+        touchHintMat.opacity = 0;
+      }
+    }
   }
 
   animate();
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
+    camera.fov = computeFOV(camera.aspect);
     camera.updateProjectionMatrix();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.domElement.style.width = window.innerWidth + 'px';
     renderer.domElement.style.height = window.innerHeight + 'px';
     if (composer) {
-      composer.setSize(window.innerWidth, window.innerHeight);
-      pixelFisheyePass.uniforms.uTexSize.value.set(window.innerWidth, window.innerHeight);
+      composer.setSize(renderer.domElement.width, renderer.domElement.height);
+      pixelFisheyePass.uniforms.uTexSize.value.set(renderer.domElement.width, renderer.domElement.height);
     }
   });
 }

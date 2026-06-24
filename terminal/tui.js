@@ -16,10 +16,72 @@ export const tui = {
   revealedLines: 0,
   totalLines: 0,
   animTimer: null,
+  selectedProject: 0,
+  projectDetail: null,
 };
 
 export function isTUIActive() {
   return tui.active;
+}
+
+function getProjectEntries() {
+  return tuiPages[3].rows.filter(r => r.entry).map(r => r.entry);
+}
+
+function wrapText(text, maxW) {
+  const words = text.split(' ');
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const trial = cur ? cur + ' ' + w : w;
+    if (trial.length > maxW) { lines.push(cur); cur = w; }
+    else { cur = trial; }
+  }
+  if (cur) lines.push(cur);
+  return lines.length ? lines : [''];
+}
+
+function buildSection(title, body, W) {
+  const boxW = W - 4;
+  const innerW = boxW - 4;
+  const top = '  ┌─' + title + ' ' + charFill('─', boxW - 4 - title.length) + '┐';
+  const lines = [top];
+  for (const raw of (Array.isArray(body) ? body : wrapText(body, innerW))) {
+    lines.push('  │ ' + pad(raw, innerW) + ' │');
+  }
+  lines.push('  └' + charFill('─', boxW - 2) + '┘');
+  return lines;
+}
+
+export function buildProjectDetailContent(W) {
+  const entries = getProjectEntries();
+  const p = entries[tui.projectDetail];
+  if (!p) return [];
+
+  const out = [];
+  out.push('');
+  out.push(center(p.title, W - 2));
+  out.push(center(p.date + (p.duration ? '  ·  ' + p.duration : ''), W - 2));
+  out.push(center(charFill('═', Math.min(p.title.length + 10, 40)), W - 2));
+  out.push('');
+
+  const stackLine = p.stack.join('  │  ');
+  out.push(...buildSection('STACK', stackLine, W));
+  out.push('');
+
+  out.push(...buildSection('PROBLÈME', p.problem, W));
+  out.push('');
+
+  out.push(...buildSection('APPROCHE', p.approach, W));
+  out.push('');
+
+  const src = p.source
+    ? p.source
+    : 'Disponible sur demande';
+  out.push(...buildSection('CODE SOURCE', src, W));
+  out.push('');
+
+  return out;
 }
 
 // ──────────────────────────────────
@@ -31,6 +93,7 @@ export const TABS_COUNT = TABS.length;
 export const TUI_W = COLS;
 
 const INDENT = '  ';
+const ENTRY_INDENT = '    ';
 const DIV = charFill('─', 36);
 
 const ASCII_NAME = [
@@ -93,33 +156,40 @@ export const tuiPages = {
   ]},
   3: { rows: [
     { blank: true },
-    { entry: { title: 'PORTFOLIOS', date: '2026', lines: [
-      'Vous êtes dessus. Three.js, custom GLSL shaders, émulateur Linux,',
-      'environment 3D à la première personne avec rendering style rétro-PS1.',
-    ]}},
+    { entry: { title: 'PORTFOLIOS', date: '2026', duration: '2 semaines',
+      stack: ['Three.js', 'GLSL', 'Canvas 2D', 'Vanilla JS'],
+      problem: 'Créer un portfolio qui se démarque, sans frameworks lourds ni dépendances NPM.',
+      approach: 'Scène 3D immersive avec Three.js. Émulateur de terminal Linux complet rendu sur Canvas 2D, utilisé comme texture sur un écran CRT modélisé. Shaders GLSL custom pour la distortion CRT (fisheye + pixelation). Architecture vanilla JS avec modules ES6, zéro build step.',
+      source: 'https://github.com/damienguyot/portfoliOS',
+      lines: ['Vous êtes dessus. Three.js, custom GLSL shaders, émulateur Linux,', 'environment 3D à la première personne avec rendering style rétro-PS1.'] }},
     { blank: true },
-    { entry: { title: 'SKINVAULT', date: '2026', lines: [
-      'Web app développé en Symfony, permettant de suivre l\'évolution',
-      'du prix de ses skins Counter-Strike, en scrappant le prix sur plus',
-      'de 10 plateformes d\'échanges différentes. Déploiement avec Docker.'
-    ]}},
+    { entry: { title: 'SKINVAULT', date: '2026', duration: '3 semaines',
+      stack: ['Symfony', 'PHP', 'Docker', 'MySQL', 'Twig'],
+      problem: 'Les sites de suivi d\'inventaire Counter-Strike se contentent d\'une estimation globale. Je voulais une plateforme capable de suivre l\'évolution des prix et d\'enregistrer les prix d\'achat de chaque skin, pour avoir un vrai suivi de portefeuille.',
+      approach: 'Plateforme de suivi qui traite chaque skin comme un actif financier : tendances de prix, graphiques de fluctuation, suivi du ROI par skin. Scraping multi-plateformes (10+ marketplaces) pour détecter les écarts et opportunités d\'arbitrage. Déploiement Docker.',
+      source: null,
+      lines: ['Web app Symfony, scraping du prix des skins CS2 sur 10+', 'plateformes. Suivi de portefeuille, graphiques. Docker.'] }},
     { blank: true },
-    { entry: { title: 'XTNIX (Python)', date: '2026', lines: [
-      'Ré-écriture du projet xtnix (originellement en Bash), en Python.',
-      'Meilleure performances, TUI avec usage en temps-réel, configuration',
-      'par knob, execution de scripts externes. Bien plus stable et poli.',
-    ]}},
+    { entry: { title: 'MIDIX', date: '2026', duration: '2 semaines',
+      stack: ['Python', 'ALSA', 'Pipewire', 'MIDI', 'Linux'],
+      problem: 'Le projet xtnix en Bash était lent et instable pour le contrôle MIDI des sinks audio Pipewire. Besoin d\'une solution performante et maintenable.',
+      approach: 'Ré-écriture complète en Python avec TUI interactive (curses). Configuration par knob MIDI en temps réel. Exécution de scripts externes pour extensibilité. Architecture modulaire.',
+      source: 'https://github.com/damienguyot/midix',
+      lines: ['Ré-écriture de xtnix (Bash) en Python. TUI, usage temps-réel,', 'configuration par knob, scripts externes. Plus stable et performant.'] }},
     { blank: true },
-    { entry: { title: 'SNEAKPEEK', date: '2025', lines: [
-      'Web app de partage d\'images temporaires entièrement chiffré',
-      '(zero-knowledge). Dashboard, Plateforme de paiement, Gestion',
-      'des crédits, Support. Déploiement avec Docker.'
-    ]}},
+    { entry: { title: 'SNEAKPEEK', date: '2025', duration: '4 semaines',
+      stack: ['Symfony', 'PHP', 'Docker', 'MySQL', 'Redis'],
+      problem: 'Je voulais explorer la complexité du chiffrement côté client et la validation de contenu avant upload, sans jamais exposer les données en clair au serveur.',
+      approach: 'Chiffrement AES-256-CBC côté client via Web Crypto API (PBKDF2, IV unique). Le serveur ne voit jamais le contenu en clair ni la clé. Rôles hiérarchisés par quotas d\'upload et taille de fichier. URLs inforçables (8 caractères hex). Expiration configurable de 5 minutes à 99 ans, nettoyage automatique. Drag-and-drop et paste-to-upload. Déploiement Docker avec supervision Prometheus/Grafana.',
+      source: null,
+      lines: ['Web app de partage d\'images chiffré (zero-knowledge). Dashboard,', 'gestion des crédits. Docker.'] }},
     { blank: true },
-    { entry: { title: 'XTNIX', date: '2025', lines: [
-      'Daemon Bash permettant d\'utiliser un controlleur MIDI afin de gérer',
-      'ses sinks audios Pipewire sur Linux',
-    ]}},
+    { entry: { title: 'XTNIX', date: '2025', duration: '1 semaine',
+      stack: ['Bash', 'Pipewire', 'ALSA', 'MIDI', 'Linux'],
+      problem: 'Impossible de contrôler finement les sinks audio Pipewire avec un contrôleur MIDI physique sous Linux. Aucune solution existante.',
+      approach: 'Daemon Bash léger écoutant les événements MIDI via ALSA. Mapping configurable contrôleurs MIDI → propriétés des sinks Pipewire (volume, mute, routing). Scripts d\'initialisation systemd pour démarrage automatique.',
+      source: 'https://github.com/damienguyot/xtnix',
+      lines: ['Daemon Bash permettant d\'utiliser un contrôleur MIDI pour gérer', 'les sinks audio Pipewire sur Linux.'] }},
   ]},
   4: { rows: [
     { blank: true },
@@ -185,8 +255,9 @@ export const tuiPages = {
 // Content rendering
 // ──────────────────────────────────
 
-export function renderContent(rows, W) {
+export function renderContent(rows, W, selEntry = -1, compact = false) {
   const out = [];
+  let entryIdx = 0;
   for (const row of rows) {
     if (row.blank) {
       const n = typeof row.blank === 'number' ? row.blank : 1;
@@ -204,10 +275,14 @@ export function renderContent(rows, W) {
       out.push(center(row.items.join('    '), W));
     } else if (row.entry) {
       const e = row.entry;
-      out.push(INDENT + e.title + '    ' + pad(e.date, 10));
-      if (e.subtitle) out.push(INDENT + e.subtitle + '    ' + pad(e.detail || '', 10));
-      out.push(INDENT + charFill('-', W - 4));
-      for (const line of e.lines) out.push(INDENT + line);
+      const marker = entryIdx === selEntry ? '  > ' : ENTRY_INDENT;
+      out.push(marker + e.title + '    ' + pad(e.date, 10));
+      if (e.subtitle) out.push(ENTRY_INDENT + e.subtitle + '    ' + pad(e.detail || '', 10));
+      if (!compact) {
+        out.push(ENTRY_INDENT + charFill('-', W - 6));
+        for (const line of e.lines) out.push(ENTRY_INDENT + line);
+      }
+      entryIdx++;
     } else if (row.edu) {
       const [title, date, school, loc] = row.edu;
       const CW = W - 6;
@@ -218,6 +293,36 @@ export function renderContent(rows, W) {
     }
   }
   return out;
+}
+
+export function getEntryLineIndex(rows, W, targetEntry, compact = false) {
+  let line = 0;
+  let entry = 0;
+  for (const row of rows) {
+    if (row.blank) {
+      line += typeof row.blank === 'number' ? row.blank : 1;
+    } else if (row.raw) {
+      line += row.raw.length;
+    } else if (row.center || row.divider) {
+      line += 1;
+    } else if (row.header) {
+      line += 2;
+    } else if (row.items) {
+      line += 1;
+    } else if (row.entry) {
+      if (entry === targetEntry) return line;
+      line += 1; // title
+      if (row.entry.subtitle) line += 1;
+      if (!compact) {
+        line += 1; // divider
+        line += row.entry.lines.length;
+      }
+      entry++;
+    } else if (row.edu) {
+      line += 4;
+    }
+  }
+  return -1;
 }
 
 // ──────────────────────────────────
@@ -271,8 +376,18 @@ export function drawTUI() {
 
   const TOP   = '╔' + charFill('═', W) + '╗';
   const TITLE = '║' + pad(topLine, W) + '║';
+  const isProjectDetail = tui.page === 3 && tui.projectDetail !== null;
+  const isProjectList = tui.page === 3 && tui.projectDetail === null;
+
   const BOT   = '╚' + charFill('═', W) + '╝';
-  const CTRL  = '║' + pad('  ← → flèches: tabs   ↑ ↓ flèches: navigation    ^C : quitter', W) + '║';
+  const hint = isProjectDetail
+    ? (getProjectEntries()[tui.projectDetail] || {}).source
+      ? '  ← → : onglets   ↑ ↓ : navigation   Espace : code source   Echap : retour'
+      : '  ← → : onglets   ↑ ↓ : navigation   Espace / Echap : retour'
+    : isProjectList
+      ? '  ← → : onglets   ↑ ↓ : selection   Espace : details    ^C : quitter'
+      : '  ← → : onglets   ↑ ↓ : navigation    ^C : quitter';
+  const CTRL  = '║' + pad(hint, W) + '║';
 
   const finalTop = pad(topLine, W);
   const aStart = finalTop.indexOf('╠');
@@ -286,7 +401,9 @@ export function drawTUI() {
   }
   bdiv += '╣';
 
-  const fullContent = renderContent(page.rows, W);
+  const fullContent = isProjectDetail
+    ? buildProjectDetailContent(W)
+    : renderContent(page.rows, W, isProjectList ? tui.selectedProject : -1, isProjectList);
   const content = tui.animTimer ? fullContent.slice(0, tui.revealedLines) : fullContent;
   const totalContent = content.length;
   const maxScroll = Math.max(0, totalContent - VISIBLE);

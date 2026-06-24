@@ -47,7 +47,9 @@ const SCREEN_H = 0.37;
 const SHADOW_MAP_SIZE = 1024;
 const NEAR_PLANE = 0.05;
 const FAR_PLANE = 20;
-const FOV = 90;
+export function computeFOV(aspect) {
+  return 90 + Math.max(0, (16 / 9 - aspect) * 24);
+}
 
 // ══════════════════════════════════
 // WebGL setup
@@ -68,7 +70,7 @@ try {
   // ── Renderer ──
   renderer = new THREE.WebGLRenderer({ antialias: false });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(1);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.domElement.style.width = window.innerWidth + 'px';
   renderer.domElement.style.height = window.innerHeight + 'px';
   renderer.shadowMap.enabled = true;
@@ -82,7 +84,7 @@ try {
   scene.fog = new THREE.Fog(0x1a1a1a, 2, 15);
 
   // ── Camera ──
-  camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, NEAR_PLANE, FAR_PLANE);
+  camera = new THREE.PerspectiveCamera(computeFOV(window.innerWidth / window.innerHeight), window.innerWidth / window.innerHeight, NEAR_PLANE, FAR_PLANE);
   camera.position.set(0, 1.10, 0.3);
   camera.rotation.order = 'YXZ';
 
@@ -268,4 +270,41 @@ function setupKeyboardModel(model, group) {
   });
   group.add(model);
   group.dispatchEvent({ type: 'loaded' });
+}
+
+// ──────────────────────────────────
+// Touch hint — 3D text above keyboard
+// ──────────────────────────────────
+
+export let touchHintScene = null;
+export let touchHintMat = null;
+
+export function addTouchHint() {
+  if (keyboard.children.length === 0) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 128;
+  const c = canvas.getContext('2d');
+  c.fillStyle = '#aaccee';
+  c.font = 'bold 52px "Courier New", monospace';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText('Navigation tactile activée', 512, 64);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.NearestFilter;
+  tex.magFilter = THREE.NearestFilter;
+  touchHintMat = new THREE.MeshBasicMaterial({
+    map: tex, transparent: true,
+    depthTest: false, depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(0.32, 0.04), touchHintMat);
+  plane.position.set(0, 0.85, 0.17);
+  plane.rotation.x = -Math.PI / 2;
+  plane.renderOrder = 999;
+
+  touchHintScene = new THREE.Scene();
+  touchHintScene.add(plane);
 }

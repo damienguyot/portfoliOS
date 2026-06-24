@@ -76,7 +76,7 @@ try {
   });
   pixelFisheyePass.renderToScreen = true;
   composer.addPass(pixelFisheyePass);
-  composer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(renderer.domElement.width, renderer.domElement.height);
   useComposer = true;
 } catch (e) {
   console.error(e);
