@@ -1,8 +1,9 @@
 import { ctx } from '../canvas.js';
 import { screenTex } from '../scene.js';
 import {
-  COLS, FONT_SIZE, LINE_H, PAD_X, PAD_Y,
+  COLS, FONT_SIZE, LINE_H, PAD_X, PAD_Y, CHAR_W,
   VISIBLE, HOME_HOST, clamp, pad, center, charFill,
+  IS_ANDROID, replaceBoxChars,
 } from './utils.js';
 
 // ──────────────────────────────────
@@ -18,6 +19,7 @@ export const tui = {
   animTimer: null,
   selectedProject: 0,
   projectDetail: null,
+  dialog: null,
 };
 
 export function isTUIActive() {
@@ -386,6 +388,8 @@ export function drawTUI() {
       : '  ← → : onglets   ↑ ↓ : navigation   Espace / Echap : retour'
     : isProjectList
       ? '  ← → : onglets   ↑ ↓ : selection   Espace : details    ^C : quitter'
+    : tui.page === 1
+      ? '  ← → : onglets   Espace : CV    ^C : quitter'
       : '  ← → : onglets   ↑ ↓ : navigation    ^C : quitter';
   const CTRL  = '║' + pad(hint, W) + '║';
 
@@ -441,11 +445,49 @@ export function drawTUI() {
   const startY = Math.max(PAD_Y, (768 - totalH) / 2);
 
   for (let i = 0; i < lines.length; i++) {
-    ctx.fillText(lines[i], PAD_X, startY + (i + 1) * LINE_H);
+    ctx.fillText(IS_ANDROID ? replaceBoxChars(lines[i]) : lines[i], PAD_X, startY + (i + 1) * LINE_H);
   }
 
   ctx.fillStyle = 'rgba(0,0,0,0.04)';
   for (let sy = 0; sy < 768; sy += 3) ctx.fillRect(0, sy, 1024, 1);
 
+  if (tui.dialog) drawDialog();
+
   if (screenTex) screenTex.needsUpdate = true;
+}
+
+function drawDialog() {
+  const msg = 'Ouvrir le CV dans un nouvel onglet ?';
+  const boxW = 44;
+  const inner = boxW - 2;
+  const totalW = boxW * CHAR_W;
+  const totalH = 5 * LINE_H;
+  const bx = Math.round((1024 - totalW) / 2);
+  const by = Math.round((768 - totalH) / 2);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.82)';
+  ctx.fillRect(0, 0, 1024, 768);
+
+  ctx.fillStyle = '#080808';
+  ctx.fillRect(bx, by, totalW, totalH);
+
+  const selNo = tui.dialog.option === 'no' ? '[ Non ]' : '  Non  ';
+  const selYes = tui.dialog.option === 'yes' ? '[ Oui ]' : '  Oui  ';
+  const sp = inner - selNo.length - selYes.length;
+  const gap = Math.floor(sp / 3);
+  const btnLine = '│' + ' '.repeat(gap) + selNo + ' '.repeat(sp - gap * 2) + selYes + ' '.repeat(gap) + '│';
+
+  const lines = [
+    '┌' + '─'.repeat(inner) + '┐',
+    '│' + pad(' ' + msg, inner) + '│',
+    '│' + pad('', inner) + '│',
+    btnLine,
+    '└' + '─'.repeat(inner) + '┘',
+  ];
+
+  ctx.fillStyle = '#bbbbbb';
+  ctx.font = FONT_SIZE + 'px "Courier New", monospace';
+  for (let i = 0; i < lines.length; i++) {
+    ctx.fillText(IS_ANDROID ? replaceBoxChars(lines[i]) : lines[i], bx, by + (i + 1) * LINE_H);
+  }
 }

@@ -1,7 +1,7 @@
 import { ctx, CANVAS_W, CANVAS_H } from '../canvas.js';
 import { screenTex } from '../scene.js';
 import { term, drawTerminal } from './index.js';
-import { CHAR_W, LINE_H, FONT_SIZE } from './utils.js';
+import { CHAR_W, LINE_H, FONT_SIZE, IS_ANDROID, replaceBoxChars } from './utils.js';
 
 // ══════════════════════════════════
 // C64 palette + layout
@@ -23,6 +23,7 @@ const BRICK_COLORS = [
 // Grid
 const CW = CHAR_W;
 const RH = LINE_H;
+const rc = (s) => IS_ANDROID ? replaceBoxChars(s) : s;
 
 // Border edges (pixel-precise, shared by draw + collision)
 const BORDER_L = 2 * CW;
@@ -247,10 +248,10 @@ function drawBorder() {
 
   // Corner decorations (using fillText with monospace font)
   ctx.font = 'bold ' + (FONT_SIZE + 2) + 'px "Courier New", monospace';
-  ctx.fillText('╔', BORDER_L + 1, BORDER_T + RH);
-  ctx.fillText('╗', BORDER_R - CW - 1, BORDER_T + RH);
-  ctx.fillText('╚', BORDER_L + 1, BORDER_B + RH);
-  ctx.fillText('╝', BORDER_R - CW - 1, BORDER_B + RH);
+  ctx.fillText(rc('╔'), BORDER_L + 1, BORDER_T + RH);
+  ctx.fillText(rc('╗'), BORDER_R - CW - 1, BORDER_T + RH);
+  ctx.fillText(rc('╚'), BORDER_L + 1, BORDER_B + RH);
+  ctx.fillText(rc('╝'), BORDER_R - CW - 1, BORDER_B + RH);
 }
 
 function drawBricks() {
@@ -314,12 +315,12 @@ function drawMessage(title, subtitle) {
   // Border
   ctx.fillStyle = C64_BORDER;
   ctx.font = FONT_SIZE + 'px "Courier New", monospace';
-  ctx.fillText('╔' + '═'.repeat(bw - 2) + '╗', gc(bx), gr(by));
+  ctx.fillText(rc('╔') + rc('═').repeat(bw - 2) + rc('╗'), gc(bx), gr(by));
   for (let r = 1; r < bh - 1; r++) {
-    ctx.fillText('║', gc(bx), gr(by + r));
-    ctx.fillText('║', gc(bx + bw - 1), gr(by + r));
+    ctx.fillText(rc('║'), gc(bx), gr(by + r));
+    ctx.fillText(rc('║'), gc(bx + bw - 1), gr(by + r));
   }
-  ctx.fillText('╚' + '═'.repeat(bw - 2) + '╝', gc(bx), gr(by + bh - 1));
+  ctx.fillText(rc('╚') + rc('═').repeat(bw - 2) + rc('╝'), gc(bx), gr(by + bh - 1));
 
   // Text
   ctx.fillStyle = C64_TEXT;

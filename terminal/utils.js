@@ -39,6 +39,35 @@ export function charFill(c, w) {
 }
 
 // ──────────────────────────────────
+// Android fingerprint & box-char fix
+// ──────────────────────────────────
+
+export const IS_ANDROID = typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent);
+
+const BOX_REPLACE = {
+  '╔': '+', '╗': '+', '╚': '+', '╝': '+',
+  '╠': '+', '╣': '+',
+  '║': '|', '═': '=',
+  '┌': '+', '┐': '+', '└': '+', '┘': '+',
+  '│': '|', '─': '-',
+  '▲': '^', '▼': 'v',
+};
+
+export function replaceBoxChars(s) {
+  if (!IS_ANDROID) return s;
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    const r = BOX_REPLACE[s[i]];
+    out += r !== undefined ? r : s[i];
+  }
+  return out;
+}
+
+export const ASCII_LOGO_ANDROID = [
+  'portfoliOS',
+];
+
+// ──────────────────────────────────
 // Shared ASCII art
 // ──────────────────────────────────
 

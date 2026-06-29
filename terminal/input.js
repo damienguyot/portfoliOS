@@ -35,7 +35,42 @@ export function setupKeyboard() {
         return;
       }
 
+      // A propos page: Space skips anim + opens CV dialog
+      if (tui.page === 1 && !tui.dialog && e.key === ' ') {
+        e.preventDefault();
+        if (tui.animTimer) { clearInterval(tui.animTimer); tui.animTimer = null; tui.revealedLines = tui.totalLines; }
+        tui.dialog = { option: 'no' };
+        drawTerminal();
+        return;
+      }
+
       if (skipLineAnim()) { e.preventDefault(); return; }
+
+      // Dialog modal
+      if (tui.dialog) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          tui.dialog = null;
+          drawTerminal();
+          return;
+        }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault();
+          tui.dialog.option = tui.dialog.option === 'no' ? 'yes' : 'no';
+          drawTerminal();
+          return;
+        }
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          if (tui.dialog.option === 'yes') {
+            window.open('cv.pdf', '_blank', 'noopener');
+          }
+          tui.dialog = null;
+          drawTerminal();
+          return;
+        }
+        return;
+      }
 
       // Project detail: Escape goes back, Space opens source
       if (tui.page === 3 && tui.projectDetail !== null) {

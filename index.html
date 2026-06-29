@@ -20,10 +20,42 @@
     pointer-events: all;
   }
   #loader.fade { opacity: 0; pointer-events: none; }
+  #phone-interstitial {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #000; z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.8s ease;
+    pointer-events: none;
+  }
+  #phone-interstitial.show { opacity: 1; pointer-events: all; }
+  #phone-interstitial.fadeout { opacity: 0; pointer-events: none; transition: opacity 1s ease; }
+  .phone-msg {
+    text-align: center; padding: 40px 24px; max-width: 340px;
+  }
+  .phone-msg p {
+    color: #aaa; font-size: 15px; line-height: 1.6; margin-bottom: 32px;
+  }
+  .phone-msg button {
+    background: none; border: 1.5px solid #fff; color: #fff;
+    font: 15px "Courier New", monospace; padding: 12px 32px;
+    cursor: pointer; letter-spacing: 1px;
+  }
+  .phone-msg button:hover { background: #fff; color: #000; }
+  .swipe-demo {
+    display: block; width: 160px; margin: 0 auto 24px auto;
+    border-radius: 6px; opacity: 0.8; background: #000;
+  }
 </style>
 </head>
 <body>
 <div id="loader"></div>
+<div id="phone-interstitial">
+  <div class="phone-msg">
+    <p>Ce portfolio a été conçu et optimisé pour une expérience optimale sur ordinateur. Des gestes tactiles ont été implémentés pour faciliter la navigation.</p>
+    <img src="swipe.gif" alt="swipe gesture" class="swipe-demo">
+    <button id="phone-ack">Je comprends</button>
+  </div>
+</div>
 <div id="scanlines"></div>
 <div id="vignette"></div>
 

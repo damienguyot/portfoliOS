@@ -42,6 +42,7 @@ try {
       }
     `,
     fragmentShader: /* glsl */ `
+      precision highp float;
       uniform sampler2D tDiffuse;
       uniform float uDistortion;
       uniform float uPixelSize;
@@ -62,15 +63,15 @@ try {
           return;
         }
 
-        bool inScreen = distorted.x > uScreenMin.x && distorted.x < uScreenMax.x
-                     && distorted.y > uScreenMin.y && distorted.y < uScreenMax.y;
-
         vec2 sampleUV = distorted;
-        if (!inScreen) {
-          sampleUV = floor(distorted * uTexSize / uPixelSize) * uPixelSize / uTexSize + (0.5 / uTexSize);
-        }
+        vec2 pixelUV = floor(distorted * uTexSize / uPixelSize) * uPixelSize / uTexSize + (0.5 / uTexSize);
 
-        gl_FragColor = texture2D(tDiffuse, sampleUV);
+        vec2 edgeDist = min(distorted - uScreenMin, uScreenMax - distorted);
+        float d = min(edgeDist.x, edgeDist.y);
+        float blendW = 2.0 / max(uTexSize.x, uTexSize.y);
+        float blend = smoothstep(0.0, blendW, d);
+
+        gl_FragColor = texture2D(tDiffuse, mix(pixelUV, sampleUV, blend));
       }
     `,
   });

@@ -1,6 +1,6 @@
 import { ctx } from '../canvas.js';
 import { screenTex } from '../scene.js';
-import { COLS, FONT_SIZE, LINE_H, PAD_X, PAD_Y, CHAR_W, PROMPT } from './utils.js';
+import { COLS, FONT_SIZE, LINE_H, PAD_X, PAD_Y, CHAR_W, PROMPT, IS_ANDROID, replaceBoxChars } from './utils.js';
 import { drawTUI, isTUIActive } from './tui.js';
 
 // ──────────────────────────────────
@@ -90,7 +90,8 @@ function drawTerm() {
 
   let y = PAD_Y + LINE_H;
   for (const line of term.lines) {
-    ctx.fillText(line.length > COLS ? line.slice(0, COLS) : line, PAD_X, y);
+    const dl = line.length > COLS ? line.slice(0, COLS) : line;
+    ctx.fillText(IS_ANDROID ? replaceBoxChars(dl) : dl, PAD_X, y);
     y += LINE_H;
     if (y > 768 - PAD_Y) break;
   }
@@ -100,9 +101,9 @@ function drawTerm() {
     ctx.fillStyle = '#bbbbbb';
 
     if (fullLine.length <= COLS) {
-      ctx.fillText(fullLine, PAD_X, y);
+      ctx.fillText(IS_ANDROID ? replaceBoxChars(fullLine) : fullLine, PAD_X, y);
       if (term.cursorOn) {
-        const cw = ctx.measureText(fullLine).width;
+        const cw = ctx.measureText(IS_ANDROID ? replaceBoxChars(fullLine) : fullLine).width;
         ctx.fillRect(PAD_X + cw, y - FONT_SIZE + 4, CHAR_W, FONT_SIZE);
       }
     } else {
@@ -110,12 +111,12 @@ function drawTerm() {
       let cy = y;
       while (remaining.length > 0) {
         const chunk = remaining.slice(0, COLS);
-        ctx.fillText(chunk, PAD_X, cy);
+        ctx.fillText(IS_ANDROID ? replaceBoxChars(chunk) : chunk, PAD_X, cy);
         remaining = remaining.slice(COLS);
         cy += LINE_H;
       }
       if (term.cursorOn) {
-        const lastChunk = fullLine.slice(-(fullLine.length % COLS || COLS));
+        const lastChunk = IS_ANDROID ? replaceBoxChars(fullLine.slice(-(fullLine.length % COLS || COLS))) : fullLine.slice(-(fullLine.length % COLS || COLS));
         const cw = ctx.measureText(lastChunk).width;
         ctx.fillRect(PAD_X + cw, cy - LINE_H - FONT_SIZE + 4, CHAR_W, FONT_SIZE);
       }

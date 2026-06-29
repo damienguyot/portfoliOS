@@ -1,5 +1,5 @@
 import { term, termAdd, termPrint, drawTerminal } from './index.js';
-import { COLS, PROMPT, center, charFill, ASCII_LOGO } from './utils.js';
+import { COLS, PROMPT, center, charFill, ASCII_LOGO, IS_ANDROID, ASCII_LOGO_ANDROID } from './utils.js';
 import { tui, tuiPages, startLineAnim, renderContent, TUI_W } from './tui.js';
 import { resetBoot } from './boot.js';
 import { startBreakout } from './breakout.js';
@@ -145,7 +145,7 @@ function cmdEcho(args) {
 function cmdNeofetch() {
   term.lines = [];
   termPrint([
-    ...ASCII_LOGO,
+    ...(IS_ANDROID ? ASCII_LOGO_ANDROID : ASCII_LOGO),
     '',
     'guest@portfoliOS',
     '───────────────',

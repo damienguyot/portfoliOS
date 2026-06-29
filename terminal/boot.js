@@ -1,5 +1,5 @@
 import { term, termAdd, drawTerminal } from './index.js';
-import { COLS, center, ASCII_LOGO } from './utils.js';
+import { COLS, center, ASCII_LOGO, IS_ANDROID, ASCII_LOGO_ANDROID } from './utils.js';
 import { tui, tuiPages, startLineAnim, renderContent, TUI_W } from './tui.js';
 
 // ──────────────────────────────────
@@ -20,7 +20,7 @@ export function setBootWarning(msg) {
 const bootSequence = [
   ['', 2000],
   ['', 80],
-  ...ASCII_LOGO.map(line => [line, 28]),
+  ...(IS_ANDROID ? ASCII_LOGO_ANDROID : ASCII_LOGO).map(line => [line, 28]),
   ['', 80],
   ['            Version 6.1.0 LTS', 60],
   ['', 1000],
